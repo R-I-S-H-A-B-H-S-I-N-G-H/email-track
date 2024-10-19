@@ -1,0 +1,9 @@
+.topButtonContainer {
+	display: flex;
+	justify-content: flex-end;
+	padding: 0.5rem;
+}
+
+.tableContainer {
+	padding: 1rem;
+}
