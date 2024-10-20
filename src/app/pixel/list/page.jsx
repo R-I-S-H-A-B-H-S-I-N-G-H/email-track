@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { getPixelTag } from "@/utils/pixelUtil";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 
 export default function PixelList() {
 	const [pixelList, setPixelList] = useState([]);
@@ -71,6 +72,7 @@ export default function PixelList() {
 	return (
 		<>
 			<Toaster />
+
 			<div>
 				<Modal onSave={onPixelSave} title={"Create New Pixel"} onOpenChange={setCreatePixelModalStatus} open={createPixelModalStatus}>
 					<Label>Name</Label>
@@ -78,9 +80,13 @@ export default function PixelList() {
 				</Modal>
 				<div className={styles.topButtonContainer}>
 					<h1 className="text-2xl font-semibold">Pixel List</h1>
-					<Button onClick={() => setCreatePixelModalStatus(true)} variant="outline">
-						Create New Pixel
-					</Button>
+
+					<div className="flex justify-end gap-3">
+						<Button onClick={() => setCreatePixelModalStatus(true)} variant="outline">
+							Create New Pixel
+						</Button>
+						<ModeToggle />
+					</div>
 				</div>
 				<div className={styles.tableContainer}>
 					<TableList
