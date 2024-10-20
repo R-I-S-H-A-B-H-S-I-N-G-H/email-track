@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +18,10 @@ export default function EmailIdPage(props) {
 		to: "",
 		subject: "",
 		message: "",
+		at: new Date(),
 	});
+
+	const [mailSendStatus, setMailSendStatus] = useState(false);
 
 	const router = useRouter();
 
@@ -32,6 +36,7 @@ export default function EmailIdPage(props) {
 		if (!emailPayload.message) throw new Error("Message is required");
 	}
 	async function sendEmail() {
+		setMailSendStatus(true);
 		try {
 			verifyEmailPayload(emailPayload);
 			await axios.post("https://go-microservice-k2dn.onrender.com/mail/send", getEmailPayload());
@@ -41,6 +46,7 @@ export default function EmailIdPage(props) {
 		} catch (error) {
 			toast.error(error.message);
 		}
+		setMailSendStatus(false);
 	}
 
 	function goToPixelList() {
@@ -63,7 +69,7 @@ export default function EmailIdPage(props) {
 
 	return (
 		<>
-			<Toaster />
+			<Toaster position="top-right" />
 			<div className="p-4 flex flex-col gap-4">
 				<div className="text-3xl font-bold">Send Tracked Email</div>
 				<div>
@@ -79,7 +85,23 @@ export default function EmailIdPage(props) {
 					<Label>Message</Label>
 					<Textarea className="min-h-80" placeholder="Enter you message here..." onChange={(e) => setEmailPayload({ ...emailPayload, message: e.target.value })} />
 				</div>
-				<Button onClick={sendEmail}>Send</Button>
+				<div className="flex gap-4 justify-end">
+					<DatePicker
+						date={emailPayload.at}
+						setDate={(e) => {
+							if (!e) return;
+							const newDate = new Date(e);
+							if (newDate.getDate() < new Date().getDate()) {
+								toast.error("Date cannot be in the past");
+								return;
+							}
+							setEmailPayload({ ...emailPayload, at: new Date(e) });
+						}}
+					/>
+					<Button disabled={mailSendStatus} onClick={sendEmail}>
+						Send {}
+					</Button>
+				</div>
 			</div>
 		</>
 	);
