@@ -10,31 +10,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { getPixelTag } from "@/utils/pixelUtil";
 
 export default function PixelList() {
 	const [pixelList, setPixelList] = useState([]);
+	const router = useRouter();
 
 	const [keys, setKeys] = useState([]);
-	const [values, setValues] = useState([]);
 	const [createPixelModalStatus, setCreatePixelModalStatus] = useState(false);
 	const [pixelPayload, setPixelPayload] = useState({
 		name: "",
 	});
 
 	useEffect(() => {
-		axios.get("https://go-microservice-k2dn.onrender.com/pixel/list?page=1&size=10").then((res) => {
-			console.log(res.data);
+		loadPixelList();
+	}, []);
+
+	async function loadPixelList() {
+		try {
+			const res = await axios.get("https://go-microservice-k2dn.onrender.com/pixel/list?page=1&size=30");
 			setPixelList(res.data);
 			setKeys([
-				{ label: "Id", key: "_id" },
 				{ label: "Name", key: "name" },
 				{ label: "Hits", key: "count" },
 				{ label: "Date Created", key: "date_created" },
 				{ label: "Date Updated", key: "last_updated" },
 				{ label: "user", key: "user_id" },
 			]);
-		});
-	}, []);
+			toast.message("Loaded Pixel List");
+		} catch (error) {
+			toast.error("Error Loading Pixel List");
+		}
+	}
 
 	async function onPixelSave() {
 		if (!pixelPayload.name) {
@@ -45,6 +53,7 @@ export default function PixelList() {
 		try {
 			await axios.post("https://go-microservice-k2dn.onrender.com/pixel", pixelPayload);
 			toast.success("Pixel Saved");
+			await loadPixelList();
 		} catch (error) {
 			toast.error(error.message);
 		}
@@ -55,40 +64,49 @@ export default function PixelList() {
 		setCreatePixelModalStatus(false);
 	}
 
-	function getPixelTag(pixelID) {
-		return `<img src="https://go-microservice-k2dn.onrender.com/pixel/${pixelID}" />`;
+	function goToEmail(pixelID) {
+		router.push(`/email/${pixelID}`);
 	}
 
 	return (
-		<div className="">
+		<>
 			<Toaster />
-			<Modal onSave={onPixelSave} title={"Create New Pixel"} onOpenChange={setCreatePixelModalStatus} open={createPixelModalStatus}>
-				<Label>Name</Label>
-				<Input placeholder="Pixel Name" value={pixelPayload.name} onChange={(e) => setPixelPayload({ ...pixelPayload, name: e.target.value })} />
-			</Modal>
-			<div className={styles.topButtonContainer}>
-				<Button onClick={() => setCreatePixelModalStatus(true)} variant="outline">
-					Create New Pixel
-				</Button>
-			</div>
-			<div className={styles.tableContainer}>
-				<TableList
-					actions={[
-						{
-							label: "Copy Capture-Tag",
-							handler: (e) => {
-								const pixelTag = getPixelTag(e._id);
-								navigator.clipboard.writeText(pixelTag);
-								toast.success("Copied to clipboard");
+			<div>
+				<Modal onSave={onPixelSave} title={"Create New Pixel"} onOpenChange={setCreatePixelModalStatus} open={createPixelModalStatus}>
+					<Label>Name</Label>
+					<Input placeholder="Pixel Name" value={pixelPayload.name} onChange={(e) => setPixelPayload({ ...pixelPayload, name: e.target.value })} />
+				</Modal>
+				<div className={styles.topButtonContainer}>
+					<h1 className="text-2xl font-semibold">Pixel List</h1>
+					<Button onClick={() => setCreatePixelModalStatus(true)} variant="outline">
+						Create New Pixel
+					</Button>
+				</div>
+				<div className={styles.tableContainer}>
+					<TableList
+						actions={[
+							{
+								label: "Copy Capture-Tag",
+								handler: (e) => {
+									const pixelTag = getPixelTag(e._id);
+									navigator.clipboard.writeText(pixelTag);
+									toast.success("Copied to clipboard");
+								},
 							},
-						},
+							{
+								label: "Send Email",
+								handler: (e) => {
+									goToEmail(e._id);
+								},
+							},
 
-						// Add more actions as needed
-					]}
-					keys={keys}
-					valueList={pixelList}
-				/>
+							// Add more actions as needed
+						]}
+						keys={keys}
+						valueList={pixelList}
+					/>
+				</div>
 			</div>
-		</div>
+		</>
 	);
 }
